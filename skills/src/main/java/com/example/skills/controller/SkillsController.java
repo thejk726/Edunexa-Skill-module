@@ -13,13 +13,13 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/skills")
+@RequestMapping("/api/v1")
 public class SkillsController {
 
     @Autowired
     private SkillsService skillsService;
 
-    @PostMapping
+    @PostMapping("/skills")
     public ResponseEntity<Object> addSkills(@RequestBody Skills skills) {
         try {
             skillsService.addSkills(skills);
@@ -29,8 +29,8 @@ public class SkillsController {
         }
     }
 
-    @GetMapping
-    public ResponseEntity<Object> getAllSkills(@RequestParam(required = false) Integer userId) {
+    @GetMapping("/skills")
+    public ResponseEntity<Object> getAllSkills(@RequestParam(required = false, name = "userId") Integer userId) {
         if (userId != null) {
             try {
                 return skillsService.fetchUserSkill(userId);
@@ -43,8 +43,8 @@ public class SkillsController {
         }
     }
 
-    @DeleteMapping
-    public ResponseEntity<Object> deleteSkills(@RequestParam int skill_id) {
+    @DeleteMapping("/skills")
+    public ResponseEntity<Object> deleteSkills(@RequestParam(name = "skill_id") int skill_id) {
         try {
             Skills deletedSkill = skillsService.getSkills(skill_id).orElseThrow(() -> new Exceptions.MissingEntityException ("Skill with id " + skill_id + " not found"));
             skillsService.deleteSkills(deletedSkill);
@@ -54,7 +54,7 @@ public class SkillsController {
         }
     }
 
-    @PutMapping
+    @PutMapping("/skills")
     public ResponseEntity<Object> updateSkills(@RequestParam int skill_id, @RequestBody Skills skills) {
         try {
             Skills updatedSkills = skillsService.getSkills(skill_id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skill_id + " not found"));
@@ -66,9 +66,12 @@ public class SkillsController {
         }
     }
 
-    @PostMapping("/user")
+    @PostMapping("/assign-skills")
     public ResponseEntity<Object> addUserSkills(@RequestBody UsersSkills usersSkills) {
-        skillsService.addUserSkill(usersSkills);
-        return ResponseBuilder.buildResponse(200, "Success", null, null);
+        try {
+           return skillsService.addUserSkill(usersSkills);
+        }catch (Exception e){
+            return ResponseBuilder.buildResponse(500,"Failed","Internal server error", Collections.singletonList(e.getMessage()));
+        }
     }
 }

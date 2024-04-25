@@ -14,7 +14,7 @@ public interface SkillsService {
     Optional<Skills> getSkills(int skill_id);
     String deleteSkills(Skills deletedSkill);
     String updateSkills(Skills updateskills);
-    void addUserSkill(UsersSkills usersSkills);
+    ResponseEntity<Object> addUserSkill(UsersSkills usersSkills);
     ResponseEntity<Object> fetchUserSkill(int userId);
 
 }

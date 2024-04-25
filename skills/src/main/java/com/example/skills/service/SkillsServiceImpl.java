@@ -47,7 +47,7 @@ public class SkillsServiceImpl implements SkillsService {
     public String deleteSkills(Skills deletedSkill) {
         Optional<Skills> existingSkill = skillsDao.findById(deletedSkill.getSkill_id());
         if (existingSkill.isEmpty()) {
-            throw new Exceptions.MissingEntityException ("Skill with ID " + deletedSkill.getSkill_id() + " not found");
+            throw new Exceptions.MissingEntityException("Skill with ID " + deletedSkill.getSkill_id() + " not found");
         }
         skillsDao.delete(deletedSkill);
         return "Skill with ID " + deletedSkill.getSkill_id() + " deleted successfully";
@@ -67,9 +67,15 @@ public class SkillsServiceImpl implements SkillsService {
     private UsersSkillsDao usersSkillsDao;
 
     @Override
-    public void addUserSkill(UsersSkills usersSkills) {
-        usersSkillsDao.save(usersSkills);
+    public ResponseEntity<Object> addUserSkill(UsersSkills usersSkills) {
+        try {
+            usersSkillsDao.save(usersSkills);
+            return ResponseBuilder.buildResponse(200,"Success",null,Collections.singletonList("Skill successfully assigned to user"));
+        } catch (Exception e) {
+            return ResponseBuilder.buildResponse(500,"Failed","Internal server error", Collections.singletonList(e.getMessage()));
+        }
     }
+
 
     @Override
     public ResponseEntity<Object> fetchUserSkill(int userId) {
