@@ -13,13 +13,13 @@ import java.util.Collections;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/skills")
 public class SkillsController {
 
     @Autowired
     private SkillsService skillsService;
 
-    @PostMapping("/skills")
+    @PostMapping
     public ResponseEntity<Object> addSkills(@RequestBody Skills skills) {
         try {
             skillsService.addSkills(skills);
@@ -29,12 +29,21 @@ public class SkillsController {
         }
     }
 
-    @GetMapping("/skills")
-    public List<Skills> getAllSkills() {
-        return skillsService.getAllSkills();
+    @GetMapping
+    public ResponseEntity<Object> getAllSkills(@RequestParam(required = false) Integer userId) {
+        if (userId != null) {
+            try {
+                return skillsService.fetchUserSkill(userId);
+            } catch (Exception e) {
+                return ResponseBuilder.buildResponse(500, "Internal Server Error", "An unexpected error occurred while processing the request", Collections.singletonList(e.getMessage()));
+            }
+        } else {
+            List<Skills> skillsList = skillsService.getAllSkills();
+            return ResponseBuilder.buildResponse(200, "Success", null, skillsList);
+        }
     }
 
-    @DeleteMapping(value = "/skills")
+    @DeleteMapping
     public ResponseEntity<Object> deleteSkills(@RequestParam int skill_id) {
         try {
             Skills deletedSkill = skillsService.getSkills(skill_id).orElseThrow(() -> new Exceptions.MissingEntityException ("Skill with id " + skill_id + " not found"));
@@ -45,34 +54,21 @@ public class SkillsController {
         }
     }
 
-    @PutMapping("/skills")
+    @PutMapping
     public ResponseEntity<Object> updateSkills(@RequestParam int skill_id, @RequestBody Skills skills) {
         try {
-            Skills updateskills = skillsService.getSkills(skill_id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skill_id + " not found"));
-            updateskills.setSkill_name(skills.getSkill_name());
-            skillsService.updateSkills(updateskills);
+            Skills updatedSkills = skillsService.getSkills(skill_id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skill_id + " not found"));
+            updatedSkills.setSkill_name(skills.getSkill_name());
+            skillsService.updateSkills(updatedSkills);
             return ResponseBuilder.buildResponse(200, "Success", null, null);
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Skill not found", null, null);
         }
     }
 
-    @PostMapping("/skills/user")
+    @PostMapping("/user")
     public ResponseEntity<Object> addUserSkills(@RequestBody UsersSkills usersSkills) {
         skillsService.addUserSkill(usersSkills);
         return ResponseBuilder.buildResponse(200, "Success", null, null);
     }
-    @GetMapping("/skills/user")
-    public ResponseEntity<Object> showSkills(@RequestParam("userId") String userIdString) {
-        try {
-            int userId = Integer.parseInt(userIdString);
-            return skillsService.fetchUserSkill(userId);
-
-        } catch (Exception e) {
-            return ResponseBuilder.buildResponse(500, "Internal Server Error", "An unexpected error occurred while processing the request", Collections.singletonList(e.getMessage()));
-        }
-    }
-
-
-
 }
