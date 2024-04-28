@@ -2,18 +2,18 @@ package com.example.skills.service;
 
 import com.example.skills.Exception.Exceptions;
 import com.example.skills.dao.SkillsDao;
+import com.example.skills.dao.UsersDao;
 import com.example.skills.dao.UsersSkillsDao;
 import com.example.skills.dto.Skills;
 import com.example.skills.dto.UsersSkills;
 import com.example.skills.utility.ResponseBuilder;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,34 +82,50 @@ public class SkillsServiceImpl implements SkillsService {
     @Autowired
     private UsersSkillsDao usersSkillsDao;
 
+    @Autowired
+    private UsersDao usersDao;
+
     @Override
     public ResponseEntity<Object> addUserSkill(UsersSkills usersSkills) {
-        try {
-            usersSkillsDao.save(usersSkills);
-            return ResponseBuilder.buildResponse(200,"Success",null,Collections.singletonList("Skill successfully assigned to user"));
-        } catch (Exception e) {
-            return ResponseBuilder.buildResponse(500,"Failed","Internal server error", Collections.singletonList(e.getMessage()));
+        if (usersSkills.getUser() == null || usersSkills.getSkill() == null) {
+            throw new Exceptions.ValidationsException("User and Skill are required");
         }
+        boolean userExists = usersDao.existsById(usersSkills.getUser().getId());
+        boolean skillExists = skillsDao.existsById(usersSkills.getSkill().getSkill_id());
+        if (!userExists && !skillExists) {
+            throw new Exceptions.MissingEntityException("Both User ID: " + usersSkills.getUser().getId() +
+                    " and Skill ID: " + usersSkills.getSkill().getSkill_id() + " not found");
+        }
+        if (!userExists) {
+            throw new Exceptions.MissingEntityException("User not found with ID: " + usersSkills.getUser().getId());
+        }
+        if (!skillExists) {
+            throw new Exceptions.MissingEntityException("Skill not found with ID: " + usersSkills.getSkill().getSkill_id());
+        }
+        boolean userSkillExists = usersSkillsDao.existsByUserAndSkill(usersSkills.getUser(), usersSkills.getSkill());
+        if (userSkillExists) {
+            throw new Exceptions.DuplicateResourceException("User skill combination already exists");
+        }
+        usersSkillsDao.save(usersSkills);
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("skill_id", usersSkills.getSkill().getSkill_id());
+        responseData.put("user_id", usersSkills.getUser().getId());
+        return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(responseData));
     }
 
     @Override
     public ResponseEntity<Object> fetchUserSkill(int userId) {
         try {
-            List<UsersSkills> usersSkillsList = usersSkillsDao.findByUserId(userId);
-            List<Skills> response = usersSkillsList.stream()
+            List<Skills> response = usersSkillsDao.findByUserId(userId).stream()
                     .map(UsersSkills::getSkill)
                     .collect(Collectors.toList());
             if (!response.isEmpty()) {
-                return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(response));
+                return ResponseBuilder.buildResponse(HttpStatus.OK.value(), "Success", null, response);
             } else {
-                return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList("No skills assigned to user " + userId));
+                return ResponseBuilder.buildResponse(HttpStatus.NOT_FOUND.value(), "Failed", "User ID not found ", null);
             }
-        }catch (NumberFormatException e) {
-            return ResponseBuilder.buildResponse(400, "Bad Request", "Invalid user ID provided", null);
-        } catch (EntityNotFoundException e) {
-            return ResponseBuilder.buildResponse(404, "Not Found", "User not found", null);
         } catch (Exception e) {
-            return ResponseBuilder.buildResponse(500, "Internal Server Error", "An unexpected error occurred while processing the request", Collections.singletonList(e.getMessage()));
+            return ResponseBuilder.buildResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed", e.getMessage(), null);
         }
     }
 
