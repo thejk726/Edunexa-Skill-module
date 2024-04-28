@@ -35,12 +35,16 @@ public class SkillsController {
     }
 
     @GetMapping("/skills")
-    public ResponseEntity<Object> getAllSkills(@RequestParam(required = false, name = "userId") Integer userId) {
-        if (userId != null) {
+    public ResponseEntity<Object> getAllSkills(@RequestParam(required = false, name = "userId") String userId) {
+        if (StringUtils.isNotBlank(userId)) {
             try {
-                return skillsService.fetchUserSkill(userId);
-            } catch (Exception e) {
-                return ResponseBuilder.buildResponse(500, "Internal Server Error", "An unexpected error occurred while processing the request", Collections.singletonList(e.getMessage()));
+                if (!StringUtils.isNumeric(userId)) {
+                    throw new NumberFormatException("User ID must be a number");
+                }
+                int id = Integer.parseInt(userId);
+                return skillsService.fetchUserSkill(id);
+            } catch (NumberFormatException e) {
+                return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
             }
         } else {
             List<Skills> skillsList = skillsService.getAllSkills();
@@ -98,28 +102,38 @@ public class SkillsController {
         }
     }
 
-
-
     @PostMapping("/skills/user")
-    public ResponseEntity<Object> addUserSkills(@RequestBody Map<String, Integer> requestBody) {
+    public ResponseEntity<Object> addUserSkills(@RequestBody Map<String, String> requestBody) {
         try {
-            int userId = requestBody.get("user_id");
-            int skillId = requestBody.get("skill_id");
-
+            String userIdStr = requestBody.get("user_id");
+            String skillIdStr = requestBody.get("skill_id");
+            if ((userIdStr == null || userIdStr.isEmpty()) && (skillIdStr == null || skillIdStr.isEmpty())) {
+                throw new Exceptions.ValidationsException("Both User ID and Skill ID are required");
+            }
+            if (userIdStr == null || userIdStr.isEmpty()) {
+                throw new Exceptions.ValidationsException("User ID is required");
+            }
+            if (skillIdStr == null || skillIdStr.isEmpty()) {
+                throw new Exceptions.ValidationsException("Skill ID is required");
+            }
+            int userId = Integer.parseInt(userIdStr);
+            int skillId = Integer.parseInt(skillIdStr);
             Users user = new Users();
             user.setId(userId);
-
             Skills skill = new Skills();
             skill.setSkill_id(skillId);
-
             UsersSkills usersSkills = new UsersSkills();
             usersSkills.setUser(user);
             usersSkills.setSkill(skill);
-
             return skillsService.addUserSkill(usersSkills);
-        } catch (Exception e) {
-            return ResponseBuilder.buildResponse(500, "Failed", "Internal server error", Collections.singletonList(e.getMessage()));
+        } catch (Exceptions.MissingEntityException e) {
+            return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
+        } catch (Exceptions.DuplicateResourceException e) {
+            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+        } catch (Exceptions.ValidationsException e) {
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
+        } catch (NumberFormatException e) {
+            return ResponseBuilder.buildResponse(400, "Failed", "ID must be a valid number", null);
         }
     }
-
 }
