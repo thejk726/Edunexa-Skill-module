@@ -53,12 +53,12 @@ public class SkillsServiceImpl implements SkillsService {
 
     @Override
     public String deleteSkills(Skills deletedSkill) {
-        Optional<Skills> existingSkill = skillsDao.findById(deletedSkill.getSkill_id());
+        Optional<Skills> existingSkill = skillsDao.findById(deletedSkill.getId());
         if (existingSkill.isEmpty()) {
-            throw new Exceptions.MissingEntityException("Skill with ID " + deletedSkill.getSkill_id() + " not found");
+            throw new Exceptions.MissingEntityException("Skill with ID " + deletedSkill.getId() + " not found");
         }
         skillsDao.delete(deletedSkill);
-        return "Skill with ID " + deletedSkill.getSkill_id() + " deleted successfully";
+        return "Skill with ID " + deletedSkill.getId() + " deleted successfully";
     }
 
     @Override
@@ -69,9 +69,9 @@ public class SkillsServiceImpl implements SkillsService {
 
         String skillName = updateskills.getSkill_name().toLowerCase();
 
-        Optional<Skills> existingSkill = skillsDao.findById(updateskills.getSkill_id());
+        Optional<Skills> existingSkill = skillsDao.findById(updateskills.getId());
         if (existingSkill.isEmpty()) {
-            throw new Exceptions.MissingEntityException("Skill with ID " + updateskills.getSkill_id() + " not found");
+            throw new Exceptions.MissingEntityException("Skill with ID " + updateskills.getId() + " not found");
         }
 
         existingSkill.get().setSkill_name(skillName);
@@ -91,16 +91,16 @@ public class SkillsServiceImpl implements SkillsService {
             throw new Exceptions.ValidationsException("User and Skill are required");
         }
         boolean userExists = usersDao.existsById(usersSkills.getUser().getId());
-        boolean skillExists = skillsDao.existsById(usersSkills.getSkill().getSkill_id());
+        boolean skillExists = skillsDao.existsById(usersSkills.getSkill().getId());
         if (!userExists && !skillExists) {
             throw new Exceptions.MissingEntityException("Both User ID: " + usersSkills.getUser().getId() +
-                    " and Skill ID: " + usersSkills.getSkill().getSkill_id() + " not found");
+                    " and Skill ID: " + usersSkills.getSkill().getId() + " not found");
         }
         if (!userExists) {
             throw new Exceptions.MissingEntityException("User not found with ID: " + usersSkills.getUser().getId());
         }
         if (!skillExists) {
-            throw new Exceptions.MissingEntityException("Skill not found with ID: " + usersSkills.getSkill().getSkill_id());
+            throw new Exceptions.MissingEntityException("Skill not found with ID: " + usersSkills.getSkill().getId());
         }
         boolean userSkillExists = usersSkillsDao.existsByUserAndSkill(usersSkills.getUser(), usersSkills.getSkill());
         if (userSkillExists) {
@@ -108,7 +108,7 @@ public class SkillsServiceImpl implements SkillsService {
         }
         usersSkillsDao.save(usersSkills);
         Map<String, Object> responseData = new HashMap<>();
-        responseData.put("skill_id", usersSkills.getSkill().getSkill_id());
+        responseData.put("skill_id", usersSkills.getSkill().getId());
         responseData.put("user_id", usersSkills.getUser().getId());
         return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(responseData));
     }
@@ -127,6 +127,15 @@ public class SkillsServiceImpl implements SkillsService {
         } catch (Exception e) {
             return ResponseBuilder.buildResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed", e.getMessage(), null);
         }
+    }
+
+    @Override
+    public void deleteUserSkill(int userId, int skillId) {
+        UsersSkills usersSkills = usersSkillsDao.findByUserIdAndSkillId(userId, skillId);
+        if (usersSkills == null) {
+            throw new Exceptions.MissingEntityException("Skill not found for user");
+        }
+        usersSkillsDao.delete(usersSkills);
     }
 
 }
