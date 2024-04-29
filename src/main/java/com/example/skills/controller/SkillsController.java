@@ -121,7 +121,7 @@ public class SkillsController {
             Users user = new Users();
             user.setId(userId);
             Skills skill = new Skills();
-            skill.setSkill_id(skillId);
+            skill.setId(skillId);
             UsersSkills usersSkills = new UsersSkills();
             usersSkills.setUser(user);
             usersSkills.setSkill(skill);
@@ -134,6 +134,16 @@ public class SkillsController {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (NumberFormatException e) {
             return ResponseBuilder.buildResponse(400, "Failed", "ID must be a valid number", null);
+        }
+    }
+    @DeleteMapping("/users/{user_id}/skills")
+    public ResponseEntity<Object> deleteUserSkill(@PathVariable("user_id") int userId,
+                                                  @RequestParam(name = "skill_id") int skillId) {
+        try {
+            skillsService.deleteUserSkill(userId, skillId);
+            return ResponseBuilder.buildResponse(200, "Success", "Skill deleted for user", null);
+        } catch (Exceptions.MissingEntityException e) {
+            return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         }
     }
 }

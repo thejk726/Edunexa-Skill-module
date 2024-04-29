@@ -14,7 +14,8 @@ import java.util.List;
 public class Skills {
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
-        private int skill_id;
+        @Column(name = "skill_id", nullable = false)
+        private int id;
 
         @NotBlank(message = "Skill name is required")
         @Column(nullable = false)
