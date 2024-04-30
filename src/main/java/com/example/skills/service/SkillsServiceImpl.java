@@ -7,7 +7,6 @@ import com.example.skills.dao.UsersSkillsDao;
 import com.example.skills.dto.Skills;
 import com.example.skills.dto.UsersSkills;
 import com.example.skills.utility.ResponseBuilder;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,19 +26,16 @@ public class SkillsServiceImpl implements SkillsService {
         if (skills.getSkill_name() == null || skills.getSkill_name().trim().isEmpty()) {
             throw new Exceptions.ValidationsException("Skill name is required");
         }
-
-        String skillName = skills.getSkill_name().toLowerCase();
-
+        String skillName = skills.getSkill_name().trim().toLowerCase(); // Trim and convert to lowercase
         List<Skills> existingSkills = skillsDao.findAll();
         for (Skills existingSkill : existingSkills) {
-            if (existingSkill.getSkill_name().equals(skills.getSkill_name())) {
+            if (existingSkill.getSkill_name().trim().equalsIgnoreCase(skillName)) {
                 throw new Exceptions.DuplicateResourceException("Skill with name " + skills.getSkill_name() + " already exists");
             }
         }
         Skills savedSkill = skillsDao.save(skills);
         return savedSkill;
     }
-
 
     @Override
     public List<Skills> getAllSkills() {
@@ -67,13 +63,18 @@ public class SkillsServiceImpl implements SkillsService {
             throw new Exceptions.ValidationsException("Skill name is required");
         }
 
-        String skillName = updateskills.getSkill_name().toLowerCase();
+        String skillName = updateskills.getSkill_name().toLowerCase().trim();
 
         Optional<Skills> existingSkill = skillsDao.findById(updateskills.getId());
         if (existingSkill.isEmpty()) {
             throw new Exceptions.MissingEntityException("Skill with ID " + updateskills.getId() + " not found");
         }
-
+        List<Skills> existingSkills = skillsDao.findAll();
+        for (Skills skill : existingSkills) {
+            if (skill.getSkill_name().trim().equalsIgnoreCase(skillName) && skill.getId() != updateskills.getId()) {
+                throw new Exceptions.DuplicateResourceException("Skill with name " + updateskills.getSkill_name() + " already exists");
+            }
+        }
         existingSkill.get().setSkill_name(skillName);
         skillsDao.save(existingSkill.get());
         return "Skills updated...";
@@ -81,8 +82,6 @@ public class SkillsServiceImpl implements SkillsService {
 
     @Autowired
     private UsersSkillsDao usersSkillsDao;
-
-    @Autowired
     private UsersDao usersDao;
 
     @Override

@@ -53,29 +53,38 @@ public class SkillsController {
     }
 
     @DeleteMapping("/skills")
-    public ResponseEntity<Object> deleteSkills(@RequestParam(name = "skill_id", required = false) String skillId) {
+    public ResponseEntity<Object> deleteSkills(@RequestParam(name = "userId", required = false) String userIdStr, @RequestBody Map<String, String> requestBody) {
         try {
-            if (StringUtils.isBlank(skillId)) {
+            String skillIdStr = requestBody.get("skillId");
+            if (StringUtils.isBlank(skillIdStr)) {
                 throw new Exceptions.ValidationsException("Skill ID is required");
             }
-            if (!StringUtils.isNumeric(skillId)) {
+            if (!StringUtils.isNumeric(skillIdStr)) {
                 throw new Exceptions.ValidationsException("Skill ID must be a number");
             }
+            int skillId = Integer.parseInt(skillIdStr);
 
-            int id = Integer.parseInt(skillId);
-
-            Skills deletedSkill = skillsService.getSkills(id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + id + " not found"));
-            skillsService.deleteSkills(deletedSkill);
-            return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(deletedSkill));
+            if (StringUtils.isNotBlank(userIdStr)) { // Check if userId is provided and not empty
+                if (!userIdStr.matches("\\d+")) {
+                    throw new Exceptions.ValidationsException("User ID must be a number");
+                }
+                int userId = Integer.parseInt(userIdStr);
+                skillsService.deleteUserSkill(userId, skillId);
+                return ResponseBuilder.buildResponse(200, "Success", "Skill deleted for user", Collections.singletonList(Map.of("userId", userId, "skillId", skillId)));
+            } else {
+                Skills deletedSkill = skillsService.getSkills(skillId)
+                        .orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skillId + " not found"));
+                skillsService.deleteSkills(deletedSkill);
+                return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(deletedSkill));
+            }
         } catch (NumberFormatException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Skill ID must be a valid number", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Skill ID or User ID must be a valid number", null);
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         }
     }
-
 
     @PutMapping("/skills")
     public ResponseEntity<Object> updateSkills(@RequestParam(required = false) String skill_id, @RequestBody Skills skills) {
@@ -90,6 +99,7 @@ public class SkillsController {
             int id = Integer.parseInt(skill_id);
 
             Skills updatedSkills = skillsService.getSkills(id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + id + " not found"));
+
             updatedSkills.setSkill_name(skills.getSkill_name());
             skillsService.updateSkills(updatedSkills);
             return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(updatedSkills));
@@ -97,6 +107,8 @@ public class SkillsController {
             return ResponseBuilder.buildResponse(400, "Failed", "Skill ID must be a valid number", null);
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
+        } catch (Exceptions.DuplicateResourceException e) {
+            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         }
@@ -134,16 +146,6 @@ public class SkillsController {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (NumberFormatException e) {
             return ResponseBuilder.buildResponse(400, "Failed", "ID must be a valid number", null);
-        }
-    }
-    @DeleteMapping("/users/{user_id}/skills")
-    public ResponseEntity<Object> deleteUserSkill(@PathVariable("user_id") int userId,
-                                                  @RequestParam(name = "skill_id") int skillId) {
-        try {
-            skillsService.deleteUserSkill(userId, skillId);
-            return ResponseBuilder.buildResponse(200, "Success", "Skill deleted for user", null);
-        } catch (Exceptions.MissingEntityException e) {
-            return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         }
     }
 }
