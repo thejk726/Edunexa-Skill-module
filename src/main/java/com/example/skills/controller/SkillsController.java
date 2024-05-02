@@ -105,7 +105,7 @@ public class SkillsController {
             skillsService.updateSkills(updatedSkills);
             return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(updatedSkills));
         } catch (NumberFormatException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Skill ID must be a valid number", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Skill ID must be a valid number ", null);
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
