@@ -82,6 +82,8 @@ public class SkillsServiceImpl implements SkillsService {
 
     @Autowired
     private UsersSkillsDao usersSkillsDao;
+
+    @Autowired
     private UsersDao usersDao;
 
     @Override

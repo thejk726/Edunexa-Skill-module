@@ -56,6 +56,7 @@ public class SkillsController {
     public ResponseEntity<Object> deleteSkills(@RequestParam(name = "userId", required = false) String userIdStr, @RequestBody Map<String, String> requestBody) {
         try {
             String skillIdStr = requestBody.get("skillId");
+
             if (StringUtils.isBlank(skillIdStr)) {
                 throw new Exceptions.ValidationsException("Skill ID is required");
             }
@@ -70,7 +71,7 @@ public class SkillsController {
                 }
                 int userId = Integer.parseInt(userIdStr);
                 skillsService.deleteUserSkill(userId, skillId);
-                return ResponseBuilder.buildResponse(200, "Success", "Skill deleted for user", Collections.singletonList(Map.of("userId", userId, "skillId", skillId)));
+                return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(Map.of("userId", userId, "skillId", skillId)));
             } else {
                 Skills deletedSkill = skillsService.getSkills(skillId)
                         .orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skillId + " not found"));
@@ -108,7 +109,7 @@ public class SkillsController {
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
-            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         }
@@ -141,7 +142,7 @@ public class SkillsController {
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
-            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (NumberFormatException e) {
