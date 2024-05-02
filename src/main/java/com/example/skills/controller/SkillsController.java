@@ -108,7 +108,7 @@ public class SkillsController {
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
-            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         }
@@ -141,7 +141,7 @@ public class SkillsController {
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
-            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (NumberFormatException e) {
