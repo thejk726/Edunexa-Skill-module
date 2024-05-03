@@ -16,4 +16,10 @@ public class Exceptions {
     public static class ValidationsException extends RuntimeException {
         public ValidationsException(String message) { super(message); }
     }
+    public static class CommentedOutRequestException extends RuntimeException {
+        public CommentedOutRequestException(String message) {
+            super(message);
+        }
+    }
+
 }
