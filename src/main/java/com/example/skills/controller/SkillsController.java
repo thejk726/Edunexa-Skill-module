@@ -68,6 +68,7 @@ public class SkillsController {
     public ResponseEntity<Object> deleteSkills(@RequestParam(name = "skillId",required = false ) String skillIdStr,
                                                @RequestParam(name = "userId",required = false) String userIdStr) {
         try {
+
             if (StringUtils.isBlank(skillIdStr)) {
                 throw new Exceptions.ValidationsException("Skill ID is required");
             }
@@ -185,10 +186,10 @@ public class SkillsController {
                 throw new Exceptions.ValidationsException("Both User ID and Skill ID are required");
             }
             if (userIdStr == null || userIdStr.isEmpty()) {
-                throw new Exceptions.ValidationsException("User ID is required");
+                throw new Exceptions.ValidationsException("User ID is invalid");
             }
             if (skillIdStr == null || skillIdStr.isEmpty()) {
-                throw new Exceptions.ValidationsException("Skill ID is required");
+                throw new Exceptions.ValidationsException("Skill ID is invalid");
             }
             int userId = Integer.parseInt(userIdStr);
             int skillId = Integer.parseInt(skillIdStr);
