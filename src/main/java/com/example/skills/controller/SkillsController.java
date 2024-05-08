@@ -6,6 +6,9 @@ import com.example.skills.dto.Users;
 import com.example.skills.dto.UsersSkills;
 import com.example.skills.service.SkillsService;
 import com.example.skills.utility.ResponseBuilder;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -23,10 +26,18 @@ public class SkillsController {
     private SkillsService skillsService;
 
     @PostMapping("/skills")
-    public ResponseEntity<Object> addSkills(@RequestBody Skills skills) {
+    public ResponseEntity<Object> addSkills(@RequestBody(required = false) String requestBody) {
+        // Check if the request body is null
+        if (requestBody == null) {
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+        }
+        String trimmedBody = requestBody.trim();
         try {
+            Skills skills = new ObjectMapper().readValue(trimmedBody, Skills.class);
             Skills savedSkill = skillsService.addSkills(skills);
             return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(savedSkill));
+        } catch (JsonProcessingException e) {
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
         } catch (Exceptions.DuplicateResourceException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
@@ -70,7 +81,7 @@ public class SkillsController {
                 }
                 int userId = Integer.parseInt(userIdStr);
                 skillsService.deleteUserSkill(userId, skillId);
-                return ResponseBuilder.buildResponse(200, "Success", "Skill deleted for user", Collections.singletonList(Map.of("userId", userId, "skillId", skillId)));
+                return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(Map.of("userId", userId, "skillId", skillId)));
             } else {
                 Skills deletedSkill = skillsService.getSkills(skillId)
                         .orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skillId + " not found"));
@@ -87,38 +98,71 @@ public class SkillsController {
     }
 
     @PutMapping("/skills")
-    public ResponseEntity<Object> updateSkills(@RequestParam(required = false) String skill_id, @RequestBody Skills skills) {
+    public ResponseEntity<Object> updateSkills(@RequestBody(required = false) String requestBody) {
+        // Check if the request body is null
+        if (requestBody == null) {
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+        }
+        // Trim the request body and check if it starts with '//'
+        String trimmedBody = requestBody.trim();
+        // Parse the JSON manually
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, String> requestBodyMap;
         try {
-            if (StringUtils.isBlank(skill_id)) {
+            requestBodyMap = objectMapper.readValue(trimmedBody, new TypeReference<Map<String, String>>() {});
+        } catch (JsonProcessingException e) {
+            // Handle JSON parsing errors
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+        }
+        try {
+            String skillIdStr = requestBodyMap.get("skill_id");
+            if (StringUtils.isBlank(skillIdStr)) {
                 throw new Exceptions.ValidationsException("Skill ID is required");
             }
-            if (!StringUtils.isNumeric(skill_id)) {
+            if (!StringUtils.isNumeric(skillIdStr)) {
                 throw new Exceptions.ValidationsException("Skill ID must be a number");
             }
-
-            int id = Integer.parseInt(skill_id);
-
+            int id = Integer.parseInt(skillIdStr);
             Skills updatedSkills = skillsService.getSkills(id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + id + " not found"));
-
-            updatedSkills.setSkill_name(skills.getSkill_name());
+            String skillName = requestBodyMap.get("skill_name");
+            if (skillName == null || skillName.trim().isEmpty()) {
+                throw new Exceptions.ValidationsException("Skill name is required");
+            }
+            updatedSkills.setSkill_name(skillName);
             skillsService.updateSkills(updatedSkills);
             return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(updatedSkills));
         } catch (NumberFormatException e) {
             return ResponseBuilder.buildResponse(400, "Failed", "Skill ID must be a valid number", null);
-        } catch (Exceptions.MissingEntityException e) {
-            return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
-            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
+        } catch (Exceptions.MissingEntityException e) {
+            return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         }
     }
 
+
     @PostMapping("/skills/user")
-    public ResponseEntity<Object> addUserSkills(@RequestBody Map<String, String> requestBody) {
+    public ResponseEntity<Object> addUserSkills(@RequestBody(required = false) String requestBody) {
+        // Check if the request body is null
+        if (requestBody == null) {
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+        }
+        // Trim the request body and check if it starts with '//'
+        String trimmedBody = requestBody.trim();
+        // Parse the JSON manually
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, String> requestBodyMap;
         try {
-            String userIdStr = requestBody.get("user_id");
-            String skillIdStr = requestBody.get("skill_id");
+            requestBodyMap = objectMapper.readValue(trimmedBody, new TypeReference<Map<String, String>>() {});
+        } catch (JsonProcessingException e) {
+            // Handle JSON parsing errors
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+        }
+        try {
+            String userIdStr = requestBodyMap.get("user_id");
+            String skillIdStr = requestBodyMap.get("skill_id");
             if ((userIdStr == null || userIdStr.isEmpty()) && (skillIdStr == null || skillIdStr.isEmpty())) {
                 throw new Exceptions.ValidationsException("Both User ID and Skill ID are required");
             }
@@ -141,11 +185,12 @@ public class SkillsController {
         } catch (Exceptions.MissingEntityException e) {
             return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
         } catch (Exceptions.DuplicateResourceException e) {
-            return ResponseBuilder.buildResponse(409, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (NumberFormatException e) {
             return ResponseBuilder.buildResponse(400, "Failed", "ID must be a valid number", null);
         }
     }
+
 }
