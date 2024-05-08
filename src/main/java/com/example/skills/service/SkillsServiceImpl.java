@@ -24,13 +24,13 @@ public class SkillsServiceImpl implements SkillsService {
     @Override
     public Skills addSkills(Skills skills) {
         if (skills.getSkill_name() == null || skills.getSkill_name().trim().isEmpty()) {
-            throw new Exceptions.ValidationsException("Skill name is required");
+            throw new Exceptions.ValidationsException("Required fields missing: Skill name");
         }
         String skillName = skills.getSkill_name().trim().toLowerCase(); // Trim and convert to lowercase
         List<Skills> existingSkills = skillsDao.findAll();
         for (Skills existingSkill : existingSkills) {
             if (existingSkill.getSkill_name().trim().equalsIgnoreCase(skillName)) {
-                throw new Exceptions.DuplicateResourceException("Skill with name " + skills.getSkill_name() + " already exists");
+                throw new Exceptions.DuplicateResourceException("Skill already exists");
             }
         }
         Skills savedSkill = skillsDao.save(skills);
@@ -60,19 +60,19 @@ public class SkillsServiceImpl implements SkillsService {
     @Override
     public String updateSkills(Skills updateskills) {
         if (updateskills.getSkill_name() == null || updateskills.getSkill_name().trim().isEmpty()) {
-            throw new Exceptions.ValidationsException("Skill name is required");
+            throw new Exceptions.ValidationsException("Required fields missing: Skill name");
         }
 
         String skillName = updateskills.getSkill_name().toLowerCase().trim();
 
         Optional<Skills> existingSkill = skillsDao.findById(updateskills.getId());
         if (existingSkill.isEmpty()) {
-            throw new Exceptions.MissingEntityException("Skill with ID " + updateskills.getId() + " not found");
+            throw new Exceptions.MissingEntityException("Skill not found");
         }
         List<Skills> existingSkills = skillsDao.findAll();
         for (Skills skill : existingSkills) {
             if (skill.getSkill_name().trim().equalsIgnoreCase(skillName) && skill.getId() != updateskills.getId()) {
-                throw new Exceptions.DuplicateResourceException("Skill with name " + updateskills.getSkill_name() + " already exists");
+                throw new Exceptions.DuplicateResourceException("Skill" + updateskills.getSkill_name() + " already exists");
             }
         }
         existingSkill.get().setSkill_name(skillName);
@@ -89,19 +89,19 @@ public class SkillsServiceImpl implements SkillsService {
     @Override
     public ResponseEntity<Object> addUserSkill(UsersSkills usersSkills) {
         if (usersSkills.getUser() == null || usersSkills.getSkill() == null) {
-            throw new Exceptions.ValidationsException("User and Skill are required");
+            throw new Exceptions.ValidationsException("Required fields missing: User and Skill");
         }
         boolean userExists = usersDao.existsById(usersSkills.getUser().getId());
         boolean skillExists = skillsDao.existsById(usersSkills.getSkill().getId());
         if (!userExists && !skillExists) {
-            throw new Exceptions.MissingEntityException("Both User ID: " + usersSkills.getUser().getId() +
+            throw new Exceptions.MissingEntityException("User ID: " + usersSkills.getUser().getId() +
                     " and Skill ID: " + usersSkills.getSkill().getId() + " not found");
         }
         if (!userExists) {
-            throw new Exceptions.MissingEntityException("User not found with ID: " + usersSkills.getUser().getId());
+            throw new Exceptions.MissingEntityException("User not found");
         }
         if (!skillExists) {
-            throw new Exceptions.MissingEntityException("Skill not found with ID: " + usersSkills.getSkill().getId());
+            throw new Exceptions.MissingEntityException("Skill not found");
         }
         boolean userSkillExists = usersSkillsDao.existsByUserAndSkill(usersSkills.getUser(), usersSkills.getSkill());
         if (userSkillExists) {
@@ -123,7 +123,7 @@ public class SkillsServiceImpl implements SkillsService {
             if (!response.isEmpty()) {
                 return ResponseBuilder.buildResponse(HttpStatus.OK.value(), "Success", null, response);
             } else {
-                return ResponseBuilder.buildResponse(HttpStatus.NOT_FOUND.value(), "Failed", "User ID not found ", null);
+                return ResponseBuilder.buildResponse(HttpStatus.NOT_FOUND.value(), "Failed", "User not found ", null);
             }
         } catch (Exception e) {
             return ResponseBuilder.buildResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Failed", e.getMessage(), null);
