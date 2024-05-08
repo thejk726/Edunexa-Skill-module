@@ -16,7 +16,5 @@ public interface SkillsService {
     String updateSkills(Skills updateskills);
     ResponseEntity<Object> addUserSkill(UsersSkills usersSkills);
     ResponseEntity<Object> fetchUserSkill(int userId);
-    void deleteUserSkill(int userId, int skill_id);
-    List<Skills> getSkillsByName(String skillName);
-    List<String> fetchUsersWithSkill(String skillId);
+
 }

@@ -13,8 +13,4 @@ public class Exceptions {
             super(message);
         }
     }
-    public static class ValidationsException extends RuntimeException {
-        public ValidationsException(String message) { super(message); }
-    }
-
 }

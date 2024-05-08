@@ -1,12 +1,12 @@
 package com.example.skills.dto;
 
-import com.example.skills.Exception.Exceptions;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -19,18 +19,19 @@ public class Skills {
         private int id;
 
         @NotBlank(message = "Skill name is required")
-        @Column(nullable = false)
-        private String skill_name;
+        @Column(name="skill_name", nullable = false)
+        private String skillName;
 
         @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore
         private List<UsersSkills> userSkills;
 
-        public void setSkill_name(String skill_name) {
-                if (Character.isDigit(skill_name.charAt(0))) {
-                        throw new Exceptions.ValidationsException("Skill name cannot start with a number");
-                }
-                this.skill_name = skill_name.toLowerCase();
+        public void setSkillName(String skillName) {
+                this.skillName = skillName.toLowerCase();
+        }
+
+        public String getSkillName() {
+                return skillName;
         }
 
 }

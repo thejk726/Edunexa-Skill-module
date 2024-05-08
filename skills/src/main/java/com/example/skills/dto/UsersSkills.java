@@ -24,6 +24,4 @@ public class UsersSkills {
     @JoinColumn(name = "skill_id", nullable = false)
     private Skills skill;
 
-    @Column(name = "skill_level", columnDefinition = "int default 1")
-    private int level;
 }
