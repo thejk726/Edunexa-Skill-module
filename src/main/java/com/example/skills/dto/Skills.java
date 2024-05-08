@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Data
@@ -18,16 +19,21 @@ public class Skills {
         private int id;
 
         @NotBlank(message = "Skill name is required")
-        @Column(nullable = false)
-        private String skill_name;
+        @Column(name="skill_name", nullable = false)
+        private String skillName;
 
         @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true)
         @JsonIgnore
         private List<UsersSkills> userSkills;
 
-        public void setSkill_name(String skill_name) {
-                this.skill_name = skill_name.toLowerCase();
+        public void setSkillName(String skillName) {
+                this.skillName = skillName.toLowerCase();
         }
+
+        public String getSkillName() {
+                return skillName;
+        }
+
 }
 
 

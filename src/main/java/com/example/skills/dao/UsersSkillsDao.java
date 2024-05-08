@@ -12,4 +12,5 @@ public interface UsersSkillsDao extends JpaRepository<UsersSkills, Integer> {
     List<UsersSkills> findByUserId(int id);
     boolean existsByUserAndSkill(Users users, Skills skills );
     UsersSkills findByUserIdAndSkillId(int userId, int skill_id);
+    List<UsersSkills> findUserIdsBySkillId(int id);
 }
