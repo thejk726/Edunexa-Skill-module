@@ -30,7 +30,7 @@ public class SkillsController {
     public ResponseEntity<Object> addSkills(@RequestBody(required = false) String requestBody) {
         // Check if the request body is null
         if (requestBody == null) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is invalid", null);
         }
         String trimmedBody = requestBody.trim();
         try {
@@ -38,7 +38,7 @@ public class SkillsController {
             Skills savedSkill = skillsService.addSkills(skills);
             return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(savedSkill));
         } catch (JsonProcessingException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body is invalid", null);
         } catch (Exceptions.DuplicateResourceException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
@@ -51,7 +51,7 @@ public class SkillsController {
         if (StringUtils.isNotBlank(userId)) {
             try {
                 if (!StringUtils.isNumeric(userId)) {
-                    throw new NumberFormatException("User ID must be a number");
+                    throw new NumberFormatException("Invalid format for User Id");
                 }
                 int id = Integer.parseInt(userId);
                 return skillsService.fetchUserSkill(id);
@@ -70,34 +70,34 @@ public class SkillsController {
         try {
 
             if (StringUtils.isBlank(skillIdStr)) {
-                throw new Exceptions.ValidationsException("Skill ID is required");
+                throw new Exceptions.ValidationsException("Required field missing: Skill Id");
             }
             if (!StringUtils.isNumeric(skillIdStr)) {
-                throw new Exceptions.ValidationsException("Skill ID must be a number");
+                throw new Exceptions.ValidationsException("Invalid format for Skill Id");
             }
             int skillId = Integer.parseInt(skillIdStr);
             if (StringUtils.isNotBlank(userIdStr)) {
                 if (StringUtils.isBlank(skillIdStr)){
-                    throw new Exceptions.ValidationsException("Skill ID is required");
+                    throw new Exceptions.ValidationsException("Required field missing: Skill Id");
                 }
                 if (!userIdStr.matches("\\d+")) {
-                    throw new Exceptions.ValidationsException("User ID must be a number");
+                    throw new Exceptions.ValidationsException("Invalid format for User Id");
                 }
                 int userId = Integer.parseInt(userIdStr);
                 skillsService.deleteUserSkill(userId, skillId);
                 return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(Map.of("userId", userId, "skillId", skillId)));
             } else {
                 Skills deletedSkill = skillsService.getSkills(skillId)
-                        .orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + skillId + " not found"));
+                        .orElseThrow(() -> new Exceptions.MissingEntityException("Skill id not found"));
                 skillsService.deleteSkills(deletedSkill);
                 return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(deletedSkill));
             }
         } catch (NumberFormatException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Skill ID or User ID must be a valid number", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Invalid format for User Id and Skill Id", null);
         } catch (Exceptions.MissingEntityException e) {
-            return ResponseBuilder.buildResponse(404, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(404, "Failed","User not found", null);
         } catch (Exceptions.ValidationsException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
+            return ResponseBuilder.buildResponse(400, "Failed",e.getMessage(), null);
         }
 
     }
@@ -107,18 +107,18 @@ public class SkillsController {
     public ResponseEntity<Object> updateSkills(@RequestBody(required = false) String requestBody) {
 
         if (requestBody == null) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body cannot be null", null);
         }
 
 
         if (requestBody.trim().isEmpty()) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body cannot be null", null);
         }
 
 
         String trimmedBody = requestBody.trim();
         if (trimmedBody.startsWith("//")) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is invalid", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Invalid request", null);
         }
 
 
@@ -128,32 +128,32 @@ public class SkillsController {
             requestBodyMap = objectMapper.readValue(trimmedBody, new TypeReference<Map<String, String>>() {});
         } catch (JsonProcessingException e) {
 
-            return ResponseBuilder.buildResponse(400, "Failed", "Error parsing request body", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Invalid request", null);
         }
 
         try {
             String skillIdStr = requestBodyMap.get("skill_id");
             if (StringUtils.isBlank(skillIdStr)) {
-                throw new Exceptions.ValidationsException("Skill ID is required");
+                throw new Exceptions.ValidationsException("Required fields missing: Skill Id");
             }
             if (!StringUtils.isNumeric(skillIdStr)) {
-                throw new Exceptions.ValidationsException("Skill ID must be a number");
+                throw new Exceptions.ValidationsException("Invalid format for Skill Id");
             }
 
             int id = Integer.parseInt(skillIdStr);
 
-            Skills updatedSkills = skillsService.getSkills(id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id " + id + " not found"));
+            Skills updatedSkills = skillsService.getSkills(id).orElseThrow(() -> new Exceptions.MissingEntityException("Skill with id not found"));
 
             String skillName = requestBodyMap.get("skill_name");
             if (skillName == null || skillName.trim().isEmpty()) {
-                throw new Exceptions.ValidationsException("Skill name is required");
+                throw new Exceptions.ValidationsException("Required fields missing: Skill name");
             }
 
             updatedSkills.setSkill_name(skillName);
             skillsService.updateSkills(updatedSkills);
             return ResponseBuilder.buildResponse(200, "Success", null, Collections.singletonList(updatedSkills));
         } catch (NumberFormatException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Skill ID must be a valid number", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Invalid format for Skill Id", null);
         } catch (Exceptions.DuplicateResourceException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (Exceptions.ValidationsException e) {
@@ -166,7 +166,7 @@ public class SkillsController {
     public ResponseEntity<Object> addUserSkills(@RequestBody(required = false) String requestBody) {
         // Check if the request body is null
         if (requestBody == null) {
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body cannot be null", null);
         }
         // Trim the request body and check if it starts with '//'
         String trimmedBody = requestBody.trim();
@@ -177,19 +177,19 @@ public class SkillsController {
             requestBodyMap = objectMapper.readValue(trimmedBody, new TypeReference<Map<String, String>>() {});
         } catch (JsonProcessingException e) {
             // Handle JSON parsing errors
-            return ResponseBuilder.buildResponse(400, "Failed", "Request body is null", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Request body cannot be null", null);
         }
         try {
             String userIdStr = requestBodyMap.get("user_id");
             String skillIdStr = requestBodyMap.get("skill_id");
             if ((userIdStr == null || userIdStr.isEmpty()) && (skillIdStr == null || skillIdStr.isEmpty())) {
-                throw new Exceptions.ValidationsException("Both User ID and Skill ID are required");
+                throw new Exceptions.ValidationsException("Required fields missing: User Id , Skill Id");
             }
             if (userIdStr == null || userIdStr.isEmpty()) {
-                throw new Exceptions.ValidationsException("User ID is invalid");
+                throw new Exceptions.ValidationsException("Invalid format for User ID");
             }
             if (skillIdStr == null || skillIdStr.isEmpty()) {
-                throw new Exceptions.ValidationsException("Skill ID is invalid");
+                throw new Exceptions.ValidationsException("Invalid format for Skill ID");
             }
             int userId = Integer.parseInt(userIdStr);
             int skillId = Integer.parseInt(skillIdStr);
@@ -208,7 +208,7 @@ public class SkillsController {
         } catch (Exceptions.ValidationsException e) {
             return ResponseBuilder.buildResponse(400, "Failed", e.getMessage(), null);
         } catch (NumberFormatException e) {
-            return ResponseBuilder.buildResponse(400, "Failed", "ID must be a valid number", null);
+            return ResponseBuilder.buildResponse(400, "Failed", "Invalid format for Id in request body", null);
         }
     }
 }
